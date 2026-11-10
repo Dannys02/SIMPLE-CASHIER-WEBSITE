@@ -1,159 +1,211 @@
 import React, { useState } from "react";
-import { Plus, Trash2, Tags, Edit2, X, Check } from "lucide-react";
+import { Plus, Trash2, Edit2, X, Check, Tags, FolderTree } from "lucide-react";
 import axios from "axios";
 
 export default function CategoryList({
     loading,
-    setLoading,
     categories,
+    products,
     fetchData
 }) {
     const [catName, setCatName] = useState("");
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const addCategory = async e => {
         e.preventDefault();
+        if (!catName.trim()) return;
+        setIsSubmitting(true);
         try {
             await axios.post("http://127.0.0.1:8000/api/categories", {
-                name: catName
+                name: catName.trim()
             });
             setCatName("");
             fetchData();
         } catch (error) {
-            alert("Gagal tambah kategori!");
+            console.error(error);
+            alert("Gagal menambahkan kategori!");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const saveEdit = async () => {
+        if (!editName.trim()) return;
         try {
             await axios.put(
                 `http://127.0.0.1:8000/api/categories/${editingId}`,
-                { name: editName }
+                { name: editName.trim() }
             );
             setEditingId(null);
             fetchData();
         } catch (error) {
-            alert("Gagal update!");
+            console.error(error);
+            alert("Gagal mengubah kategori!");
         }
     };
 
     const deleteCategory = async id => {
-        if (
-            confirm(
-                "Hapus kategori ini? Semua produk di dalamnya juga akan terpengaruh."
-            )
-        ) {
-            await axios.delete(`http://127.0.0.1:8000/api/categories/${id}`);
-            fetchData();
+        const productCount = products.filter(p => p.category_id === id).length;
+        const msg = productCount > 0 
+            ? `Kategori ini memiliki ${productCount} produk. Apakah yakin ingin menghapusnya?`
+            : "Hapus kategori ini?";
+            
+        if (window.confirm(msg)) {
+            try {
+                await axios.delete(`http://127.0.0.1:8000/api/categories/${id}`);
+                fetchData();
+            } catch (error) {
+                console.error(error);
+                alert("Gagal menghapus kategori!");
+            }
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="custom-loader mb-4"></div>
-                <p className="text-gray-400 animate-pulse">
-                    Menghubungkan ke server...
-                </p>
-            </div>
-        );
-    }
-
     return (
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-orange-50">
-            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                Daftar Kategori
-            </h2>
-            <form onSubmit={addCategory} className="flex flex-col gap-2 mb-8">
-                <input
-                    type="text"
-                    className="flex-1 p-3 rounded-xl border border-gray-200 outline-none"
-                    placeholder="Nama Kategori Baru..."
-                    value={catName}
-                    onChange={e => setCatName(e.target.value)}
-                    required
-                />
-                <button
-                    type="submit"
-                    className="bg-orange-600 w-fit text-white px-6 py-2 rounded-xl font-bold hover:bg-orange-700 transition-all flex items-center gap-2"
-                >
-                    <Plus size={18} /> Tambah
-                </button>
-            </form>
-            <div className="space-y-3">
-                {categories.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
-                        <div className="bg-gray-50 p-6 rounded-full mb-4">
-                            <Tags size={48} className="text-gray-300" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-700">
-                            Data Kategori Tidak Ada
-                        </h3>
-                        <p className="text-gray-400 text-sm">
-                            Belum ada kategori yang ditambahkan di sini.
-                        </p>
+        <div className="max-w-4xl mx-auto space-y-6 pb-12">
+            {/* Header info */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                        Kelola Kategori Menu
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                        Kelompokkan sajian makanan dan minuman agar mudah dicari kasir
+                    </p>
+                </div>
+                <div className="text-xs font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 self-start sm:self-auto">
+                    Total: <span className="text-orange-600 font-extrabold">{categories.length} Kategori</span>
+                </div>
+            </div>
+
+            {/* Input Form Tambah Kategori */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <form onSubmit={addCategory} className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="relative flex-1 w-full">
+                        <Tags className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Ketik nama kategori baru (contoh: Makanan Utama, Minuman Dingin)..."
+                            value={catName}
+                            onChange={e => setCatName(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
+                            required
+                        />
                     </div>
-                ) : (
-                    categories.map(cat => (
-                        <div
-                            key={cat.id}
-                            className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl group hover:bg-orange-50 transition-all"
-                        >
-                            {editingId === cat.id ? (
-                                <input
-                                    type="text"
-                                    className="flex-1 p-1 bg-white border rounded outline-none"
-                                    value={editName}
-                                    onChange={e => setEditName(e.target.value)}
-                                    autoFocus
-                                />
-                            ) : (
-                                <span className="font-semibold text-gray-700">
-                                    {cat.name}
-                                </span>
-                            )}
-                            <div className="flex gap-2 opacity-100 transition-all">
-                                {editingId === cat.id ? (
-                                    <>
-                                        <button
-                                            onClick={saveEdit}
-                                            className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
-                                        >
-                                            <Check size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingId(null)}
-                                            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"
-                                        >
-                                            <X size={18} />
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={() => {
-                                                setEditingId(cat.id);
-                                                setEditName(cat.name);
-                                            }}
-                                            className="p-2 text-orange-500 hover:bg-orange-100 rounded-lg"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                deleteCategory(cat.id)
-                                            }
-                                            className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </>
-                                )}
-                            </div>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+                    >
+                        <Plus size={16} strokeWidth={2.5} />
+                        <span>Tambah Kategori</span>
+                    </button>
+                </form>
+            </div>
+
+            {/* Grid List Kategori */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <FolderTree size={16} className="text-orange-600" />
+                        <span>Kategori Tersedia</span>
+                    </h3>
+                </div>
+
+                <div className="p-4 sm:p-6">
+                    {loading ? (
+                        <div className="py-12 text-center">
+                            <div className="custom-loader mx-auto mb-2"></div>
+                            <p className="text-xs text-slate-400">Memuat kategori...</p>
                         </div>
-                    ))
-                )}
+                    ) : categories.length === 0 ? (
+                        <div className="py-10 text-center text-xs text-slate-400">
+                            Belum ada kategori yang ditambahkan. Buat kategori pertama di atas.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            {categories.map(cat => {
+                                const count = products.filter(p => p.category_id === cat.id).length;
+                                const isEditingThis = editingId === cat.id;
+
+                                return (
+                                    <div
+                                        key={cat.id}
+                                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                                            isEditingThis 
+                                                ? "border-orange-500 bg-orange-50/30" 
+                                                : "border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300"
+                                        }`}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            {isEditingThis ? (
+                                                <input
+                                                    type="text"
+                                                    value={editName}
+                                                    onChange={e => setEditName(e.target.value)}
+                                                    className="w-full px-3 py-1.5 bg-white border border-orange-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-slate-800 truncate">
+                                                        {cat.name}
+                                                    </h4>
+                                                    <span className="text-[11px] text-slate-400 font-medium">
+                                                        {count} Produk Terdaftar
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            {isEditingThis ? (
+                                                <>
+                                                    <button
+                                                        onClick={saveEdit}
+                                                        className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-xs"
+                                                        title="Simpan Perubahan"
+                                                    >
+                                                        <Check size={16} strokeWidth={2.5} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingId(null)}
+                                                        className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-all"
+                                                        title="Batal"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingId(cat.id);
+                                                            setEditName(cat.name);
+                                                        }}
+                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                                                        title="Ubah Nama"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteCategory(cat.id)}
+                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                        title="Hapus Kategori"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

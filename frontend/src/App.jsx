@@ -3,7 +3,7 @@ import axios from "axios";
 import "./App.css";
 import { Navigate, useLocation, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
 import ProductCard from "./components/ProductCard";
 import ProductList from "./components/ProductList";
 import CategoryList from "./components/CategoryList";
@@ -91,10 +91,12 @@ function App() {
         return children;
     };
 
+    const isLoginPage = location.pathname === "/";
+
     return (
-        <>
-            {location.pathname != "/" && <Navbar />}
-            <div className="bg-gray-50 p-6 font-sans">
+        <div className="body min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+            {!isLoginPage && <Sidebar />}
+            <main className={`flex-1 transition-all ${!isLoginPage ? "lg:ml-64 p-4 sm:p-6 lg:p-8" : ""}`}>
                 <Routes>
                     <Route
                         path="/"
@@ -169,8 +171,8 @@ function App() {
                     />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-            </div>
-        </>
+            </main>
+        </div>
     );
 }
 
