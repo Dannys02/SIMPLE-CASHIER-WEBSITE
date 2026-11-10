@@ -7,12 +7,15 @@ import {
     ChevronRight, 
     Calendar, 
     Hash, 
-    FileText 
+    FileText,
+    Download
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Transaction({ loading, transactions, itemsPerPage = 8 }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedTrx, setSelectedTrx] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     if (loading) {
         return (
@@ -43,6 +46,148 @@ export default function Transaction({ loading, transactions, itemsPerPage = 8 })
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = transactions.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+    // FUNGSI EXPORT LAPORAN PDF
+    const exportToPDF = () => {
+        if (transactions.length === 0) {
+            alert("Tidak ada data transaksi untuk dicetak!");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            const doc = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4"
+            });
+
+            // 1. Header Banner & Info Usaha
+            doc.setFillColor(24, 24, 27); // Dark Zinc background
+            doc.rect(0, 0, 210, 36, "F");
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("LAPORAN RIWAYAT PENJUALAN", 14, 18);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(212, 212, 216);
+            doc.text("KASIR POS • Sistem Pencatatan Transaksi Penjualan", 14, 25);
+
+            const exportDate = new Date().toLocaleDateString("id-ID", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+            const exportTime = new Date().toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+            doc.text(`Waktu Cetak: ${exportDate}, ${exportTime} WIB`, 210 - 14, 25, { align: "right" });
+
+            // 2. Ringkasan Eksekutif (Summary Box)
+            doc.setFillColor(248, 250, 252); // Slate-50
+            doc.setDrawColor(226, 232, 240); // Slate-200
+            doc.roundedRect(14, 42, 182, 22, 3, 3, "FD");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139); // Slate-500
+            doc.text("TOTAL TRANSAKSI", 22, 50);
+            doc.text("MENU TERLARIS", 82, 50);
+            doc.text("TOTAL OMSET KESELURUHAN", 142, 50);
+
+            doc.setFontSize(12);
+            doc.setTextColor(15, 23, 42); // Slate-900
+            doc.text(`${totalTransaksi} Checkout`, 22, 58);
+            
+            doc.setFontSize(10);
+            const truncatedTop = topProduct[0].length > 18 ? topProduct[0].substring(0, 18) + "..." : topProduct[0];
+            doc.text(`${truncatedTop} (${topProduct[1]}x)`, 82, 58);
+
+            doc.setFontSize(12);
+            doc.setTextColor(234, 88, 12); // Orange-600
+            doc.text(`Rp ${totalOmzet.toLocaleString("id-ID")}`, 142, 58);
+
+            // 3. Persiapkan Data Tabel
+            const tableRows = transactions.map((t, index) => {
+                const dateObj = new Date(t.created_at);
+                const waktu = !isNaN(dateObj)
+                    ? dateObj.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) +
+                      " " +
+                      dateObj.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+                    : "-";
+
+                const itemsText = t.details && t.details.length > 0
+                    ? t.details.map(d => `• ${d.product_name} (x${d.qty})`).join("\n")
+                    : "-";
+
+                return [
+                    (index + 1).toString(),
+                    t.reference_no || "-",
+                    waktu,
+                    itemsText,
+                    `Rp ${Number(t.total_price || 0).toLocaleString("id-ID")}`
+                ];
+            });
+
+            // 4. Render Tabel Otomatis dengan Pagination Bersih
+            autoTable(doc, {
+                startY: 70,
+                head: [["No", "No. Referensi", "Waktu Transaksi", "Daftar Menu & Kuantitas", "Total Tagihan"]],
+                body: tableRows,
+                theme: "striped",
+                headStyles: {
+                    fillColor: [249, 115, 22], // Orange-500
+                    textColor: [255, 255, 255],
+                    fontStyle: "bold",
+                    fontSize: 9,
+                    halign: "left"
+                },
+                styles: {
+                    font: "helvetica",
+                    fontSize: 8,
+                    textColor: [51, 65, 85],
+                    cellPadding: 3.5,
+                    valign: "middle"
+                },
+                columnStyles: {
+                    0: { halign: "center", cellWidth: 14 },
+                    1: { fontStyle: "bold", cellWidth: 32 },
+                    2: { cellWidth: 34 },
+                    3: { cellWidth: 68 },
+                    4: { halign: "right", fontStyle: "bold", textColor: [194, 65, 12], cellWidth: 34 }
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252]
+                },
+                margin: { left: 14, right: 14, bottom: 20 },
+                didDrawPage: (data) => {
+                    // Footer di tiap halaman
+                    const pageCount = doc.internal.getNumberOfPages();
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(
+                        `Dokumen ini dibuat otomatis oleh Sistem Kasir • Halaman ${data.pageNumber} dari ${pageCount}`,
+                        105,
+                        290,
+                        { align: "center" }
+                    );
+                }
+            });
+
+            const fileName = `Laporan_Penjualan_${new Date().toISOString().slice(0, 10)}.pdf`;
+            doc.save(fileName);
+        } catch (error) {
+            console.error("Gagal export PDF:", error);
+            alert("Terjadi kesalahan saat memproses file PDF!");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-12">
@@ -93,11 +238,22 @@ export default function Transaction({ loading, transactions, itemsPerPage = 8 })
 
             {/* TABEL RIWAYAT TRANSAKSI */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
+                <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
                     <div>
                         <h3 className="text-sm font-bold text-slate-800">Riwayat Penjualan Terbaru</h3>
                         <p className="text-xs text-slate-400">Daftar rekapan transaksi pesanan pembeli</p>
                     </div>
+
+                    {/* TOMBOL CETAK PDF DI SEBELAH KANAN UJUNG */}
+                    <button
+                        onClick={exportToPDF}
+                        disabled={isExporting || transactions.length === 0}
+                        className="self-start sm:self-auto px-4 py-2 bg-zinc-900 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        title="Download Laporan Penjualan (PDF)"
+                    >
+                        <Download size={15} />
+                        <span>{isExporting ? "Menyiapkan PDF..." : "Cetak PDF"}</span>
+                    </button>
                 </div>
 
                 <div className="overflow-x-auto">
