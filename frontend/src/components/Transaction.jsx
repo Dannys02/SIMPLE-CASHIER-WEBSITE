@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Clock, Tag, ShoppingBag, ArrowRight, ArrowLeft, TrendingUp } from "lucide-react";
 
-export default function Transaction({ loading, transactions, currentPage, setCurrentPage, itemsPerPage }) {
+export default function Transaction({ loading, transactions, itemsPerPage = 5 }) {
+    const [currentPage, setCurrentPage] = useState(1);
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">

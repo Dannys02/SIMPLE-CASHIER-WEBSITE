@@ -27,7 +27,8 @@ const Login = () => {
                 navigate("/dashboard");
             }
         } catch (err) {
-            setError("Email atau password salah.");
+            console.log(err);
+            setError("Email atau password salah.", err);
         }
     };
 

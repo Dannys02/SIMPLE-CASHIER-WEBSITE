@@ -18,8 +18,6 @@ function App() {
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
     const location = useLocation();
 
     // Fungsi Ambil Data dari Laravel
@@ -49,21 +47,15 @@ function App() {
 
     const addToCart = product => {
         setCart(prev => {
-            const currentProduct = products.find(p => p.id === product.id);
             const isExist = prev.find(item => item.id === product.id);
 
             if (isExist) {
-                if (isExist.qty >= currentProduct.stock) {
-                    alert("Stok tidak mencukupi!");
-                    return prev;
-                }
                 return prev.map(item =>
                     item.id === product.id
                         ? { ...item, qty: item.qty + 1 }
                         : item
                 );
             }
-            if (currentProduct.stock <= 0) return prev;
             return [...prev, { ...product, qty: 1 }];
         });
     };
@@ -145,9 +137,6 @@ function App() {
                                     setProducts={setProducts}
                                     categories={categories}
                                     fetchData={fetchData}
-                                    currentPage={currentPage}
-                                    setCurrentPage={setCurrentPage}
-                                    itemsPerPage={itemsPerPage}
                                 />
                             </ProtectedRoute>
                         }
@@ -162,9 +151,6 @@ function App() {
                                     categories={categories}
                                     products={products}
                                     fetchData={fetchData}
-                                    currentPage={currentPage}
-                                    setCurrentPage={setCurrentPage}
-                                    itemsPerPage={itemsPerPage}
                                 />
                             </ProtectedRoute>
                         }
@@ -177,9 +163,6 @@ function App() {
                                     loading={loading}
                                     setLoading={setLoading}
                                     transactions={transactions}
-                                    currentPage={currentPage}
-                                    setCurrentPage={setCurrentPage}
-                                    itemsPerPage={itemsPerPage}
                                 />
                             </ProtectedRoute>
                         }

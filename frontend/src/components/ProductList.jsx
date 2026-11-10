@@ -7,10 +7,9 @@ export default function ProductList({
     products,
     categories,
     fetchData,
-    currentPage,
-    setCurrentPage,
-    itemsPerPage
+    itemsPerPage = 5
 }) {
+    const [currentPage, setCurrentPage] = useState(1);
     const [form, setForm] = useState({
         id: null,
         name: "",
