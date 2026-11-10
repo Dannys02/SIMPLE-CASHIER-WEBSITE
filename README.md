@@ -1,148 +1,57 @@
-# Website Kasir Sederhana
+# Kasir POS - Cashier Management System
 
-Sebuah aplikasi web untuk sistem penjualan (Point of Sale/POS) yang sederhana. Aplikasi ini dirancang untuk membantu pengguna mengelola kategori produk, data produk, dan mencatat transaksi penjualan dengan mudah.
+A modern, fast, and minimalist Point of Sale (POS) web application designed for small-to-medium food and beverage businesses.
 
-## 📋 Fitur Utama
+[**Bahasa Indonesia**](README.id.md) | **English**
 
-- **Manajemen Kategori**: Tambah, ubah, dan hapus kategori produk
-- **Manajemen Produk**: Tambah, ubah, dan hapus produk beserta gambar produk
-- **Keranjang Belanja**: Masukkan produk ke keranjang dengan jumlah yang bisa dikustomisasi
-- **Proses Transaksi**: Hitung total pembelian dan catat transaksi penjualan
-- **Riwayat Penjualan**: Lihat daftar semua transaksi yang pernah dilakukan
-- **Perhitungan Revenue**: Tampilkan total pendapatan dari semua transaksi
-- **Autentikasi**: Login dan logout untuk mengamankan aplikasi
+---
 
-## 🛠️ Teknologi yang Digunakan
+## 1. Overview
+Kasir POS is a lightweight web-based Point of Sale and sales tracking system. Built with a Laravel 11 REST API on the backend and React 19 with Tailwind CSS on the frontend, it delivers an intuitive, responsive, and distraction-free checkout experience across desktop and mobile devices.
 
-### Backend
-- **Framework**: Laravel 11 (REST API)
-- **Database**: MySQL
-- **Authentication**: Laravel Sanctum
-- **Language**: PHP
+## 2. Problems It Solves
+- **Manual Calculation Errors**: Eliminates pen-and-paper calculation mistakes by automating line-item summaries and total order billing.
+- **Slow Checkout During Peak Hours**: Features instant search, category filtering, and direct quantity inputs so cashiers can process high-volume orders rapidly.
+- **Accurate Cash and Change Management**: Calculates cash received and customer change with built-in quick cash denominations.
+- **Reporting and Archiving**: Provides real-time revenue analytics and single-click PDF sales report generation with automatic pagination.
 
-### Frontend
-- **Framework**: React 19 dengan Vite
-- **Styling**: Tailwind CSS
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
-- **Routing**: React Router 7
+## 3. Key Capabilities
+- **Cashier POS Terminal**: Split-screen desktop catalog with a sticky checkout receipt and a responsive mobile bottom drawer.
+- **Menu and Category Management**: Complete CRUD operations for food and beverage items with image upload support.
+- **Sales History and Reporting**: Filterable transaction logs, best-selling product tracking, and structured PDF export.
+- **Secure Access Control**: Token-based authentication powered by Laravel Sanctum.
 
-## 👤 Peran Saya dalam Project
+## 4. Getting Started
 
-Saya adalah pengembang utama (full-stack) dalam project ini yang bertanggung jawab untuk:
-
-- Membuat struktur database dengan migrations Laravel
-- Mengembangkan API endpoints untuk kategori, produk, dan transaksi
-- Membuat model dan controller di sisi backend
-- Membangun interface frontend menggunakan React
-- Mengintegrasikan komunikasi antara frontend dan backend
-- Menerapkan fitur autentikasi sederhana
-
-## 📚 Apa yang Saya Pahami dari Project Ini
-
-### Konsep Backend (Laravel)
-- Struktur MVC (Model-View-Controller) dan bagaimana memisahkan logika bisnis
-- Routing dan HTTP methods (GET, POST, PUT, DELETE)
-- Database migrations untuk membuat struktur tabel
-- Eloquent ORM untuk berinteraksi dengan database
-
-### Konsep Frontend (React)
-- Component-based architecture (memecah UI menjadi komponen kecil)
-- State management dengan `useState` dan props
-- Lifecycle dengan `useEffect` untuk fetch data dari API
-- React Router untuk navigasi antar halaman
-
-### Konsep Full-Stack
-- Arsitektur API REST (client-server)
-- Komunikasi HTTP antara frontend dan backend
-- CORS (Cross-Origin Resource Sharing)
-- Validasi data dari sisi client dan server
-
-## ⚠️ Catatan Pengembangan
-
-### Penggunaan AI
-- AI (Claude) membantu dalam:
-  - Memberikan penjelasan konsep Laravel dan React
-  - Debugging error dan troubleshooting
-  - Optimasi struktur kode
-  - Penulisan dokumentasi README ini
-
-### Keterbatasan dan Area Pengembangan
-Aplikasi ini masih sangat sederhana, beberapa area yang bisa dikembangkan ke depan:
-- Validasi input masih dasar
-- Performa belum dioptimasi untuk data besar
-- UI/UX masih basic, bisa dibuat lebih menarik
-
-## 🚀 Cara Menjalankan Project
-
-### Prasyarat
-- PHP 8.1+
+### Prerequisites
+- PHP 8.2 or higher
 - Composer
-- Node.js (v16+)
-- Database (SQLite atau MySQL)
+- Node.js 18 or higher with npm
+- SQLite or MySQL
 
-### Langkah Instalasi
-
-#### 1. Setup Backend
-
+### Backend Installation
 ```bash
-# Masuk ke folder backend
 cd backend
-
-# Install PHP dependencies
 composer install
-
-# Copy file environment
 cp .env.example .env
-
-# Generate application key
 php artisan key:generate
-
-# Jalankan migration untuk membuat tabel database
 php artisan migrate --seed
-
-# Jalankan server Laravel (default port 8000)
+php artisan storage:link
 php artisan serve
 ```
+The API server will run at `http://127.0.0.1:8000`.
 
-#### 2. Setup Frontend
-
+### Frontend Installation
 ```bash
-# Masuk ke folder frontend (di terminal baru)
 cd frontend
-
-# Install dependencies
 npm install
-
-# Jalankan development server (default port 5173)
 npm run dev
 ```
+The application will be accessible at `http://localhost:5173`.
 
-#### 3. Buka Aplikasi
-
-Buka browser dan akses:
-```
-http://localhost:5173
-```
-
-Server API akan berjalan di:
-```
-http://localhost:8000/api
-```
-
-### Build untuk Production
-
-```bash
-# Frontend
-cd frontend
-npm run build
-
-# Backend sudah siap, tinggal deploy ke hosting
-```
-
-## 📝 Catatan Tambahan
-
-- Project ini dibuat sebagai tugas sekolah RPL
-- Kode masih dalam tahap pembelajaran
-- Feedback dan saran sangat diterima untuk improvement
-- Tidak semua best practices production diterapkan sepenuhnya
+## 5. How to Use
+1. **Log In**: Access the login page using authorized cashier credentials.
+2. **Select Menu Items**: In the POS Dashboard, search by menu name or filter by category pills.
+3. **Adjust Order Quantity**: Click items to add them to the cart, or enter exact quantities directly.
+4. **Process Payment**: Open the checkout modal, enter the cash amount received (or click a quick cash button), verify the change, and confirm.
+5. **Generate Reports**: Navigate to "Riwayat Penjualan" and click "Cetak PDF" to download the formal sales report.
